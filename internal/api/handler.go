@@ -3,11 +3,8 @@ package api
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"io"
-	"log"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/dhilzyi/anime-tracker/internal/database"
 )
@@ -27,15 +24,16 @@ func (h *Handler) GetAnime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var remapDataAnime []CreateAnimeRequest
+	var remapDataAnime []Anime
 	for i := range dataAnime {
-		instance := CreateAnimeRequest{
+		instance := Anime{
 			RomajiName:   dataAnime[i].RomajiName,
 			EnglishName:  &dataAnime[i].EnglishName.String,
 			JapaneseName: &dataAnime[i].JapaneseName.String,
 			Type:         &dataAnime[i].Type.String,
-			ReleaseDate:  dataAnime[i].ReleaseDate.Time,
+			ReleaseDate:  validateTime(dataAnime[i].ReleaseDate),
 		}
+
 		remapDataAnime = append(remapDataAnime, instance)
 	}
 
@@ -43,13 +41,13 @@ func (h *Handler) GetAnime(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
-	var req CreateAnimeRequest
+	var req Anime
 	if err := decodeJson(r.Body, &req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "", err)
 		return
 	}
 
-	params := database.InsertAnimeParams{
+	params := database.CreateAnimeParams{
 		RomajiName:   req.RomajiName,
 		JapaneseName: toNullString(req.JapaneseName),
 		EnglishName:  toNullString(req.EnglishName),
@@ -57,60 +55,67 @@ func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
 		ReleaseDate:  toNullTime(req.ReleaseDate),
 	}
 
-	if _, err := h.db.InsertAnime(context.Background(), params); err != nil {
+	if _, err := h.db.CreateAnime(context.Background(), params); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "", err)
 	}
 	w.WriteHeader(204)
 }
 
-func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
+func (h *Handler) DeleteAnimeById(w http.ResponseWriter, r *http.Request) {
+	rawAnimeID := r.PathValue("animeID")
+	animeID, err := strconv.Atoi(rawAnimeID)
 	if err != nil {
-		log.Println(err)
-	}
-	if code > 499 {
-		log.Printf("Responding with 5XX error: %s", msg)
-	}
-	type errorResponse struct {
-		Error string `json:"error"`
-	}
-	respondWithJSON(w, code, errorResponse{
-		Error: msg,
-	})
-}
-
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	dat, err := json.Marshal(payload)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
-	w.WriteHeader(code)
-	w.Write(dat)
+
+	if err := h.db.DeleteAnimeById(context.Background(), int32(animeID)); err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "Anime by following id is not exist", err)
+			return
+		}
+		respondWithError(w, 500, err.Error(), err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func decodeJson(raw io.Reader, placeholder any) error {
-	decoder := json.NewDecoder(raw)
-	err := decoder.Decode(placeholder)
+func (h *Handler) GetAnimeById(w http.ResponseWriter, r *http.Request) {
+	rawAnimeID := r.PathValue("animeID")
+	animeID, err := strconv.Atoi(rawAnimeID)
 	if err != nil {
-		return err
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+	animeData, err := h.db.GetAnimeById(context.Background(), int32(animeID))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "Anime by following id is not exist", err)
+			return
+		}
+		respondWithError(w, 500, err.Error(), err)
+		return
+	}
+	remap := Anime{
+		RomajiName:   animeData.RomajiName,
+		EnglishName:  &animeData.EnglishName.String,
+		JapaneseName: &animeData.JapaneseName.String,
+		Type:         &animeData.Type.String,
+		ReleaseDate:  validateTime(animeData.ReleaseDate),
 	}
 
-	return nil
+	respondWithJSON(w, http.StatusOK, remap)
+
 }
 
-func toNullString(s *string) sql.NullString {
-	if s == nil {
-		return sql.NullString{Valid: false}
-	}
-	return sql.NullString{String: *s, Valid: true}
-}
-
-func toNullTime(t time.Time) sql.NullTime {
-	if t.IsZero() {
-		return sql.NullTime{Valid: false}
+func (h *Handler) UpdateAnimeById(w http.ResponseWriter, r *http.Request) {
+	rawAnimeID := r.PathValue("animeID")
+	animeID, err := strconv.Atoi(rawAnimeID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
 	}
 
-	return sql.NullTime{Time: t, Valid: true}
+	inputParam := database.UpdateAnimeByIdParams{}
 }

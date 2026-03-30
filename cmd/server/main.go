@@ -29,11 +29,13 @@ func main() {
 	mux := http.NewServeMux()
 	srv := http.Server{
 		Handler: mux,
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    ":" + port,
 	}
 
 	mux.HandleFunc("GET /api/anime", handler.GetAnime)
+	mux.HandleFunc("GET /api/anime/{animeID}", handler.GetAnimeById)
 	mux.HandleFunc("POST /api/anime", handler.PostAnime)
+	mux.HandleFunc("DELETE /api/anime/{animeID}", handler.DeleteAnimeById)
 
 	fmt.Printf("Serving at http://localhost:%s/\n", port)
 	log.Fatal(srv.ListenAndServe())

@@ -10,6 +10,59 @@ import (
 	"database/sql"
 )
 
+const createAnime = `-- name: CreateAnime :one
+INSERT INTO anime(
+	created_at,
+	updated_at,
+	romaji_name,
+	japanese_name,
+	english_name,
+	type,
+	release_date
+)
+VALUES(NOW(), NOW(), $1, $2, $3, $4, $5)
+RETURNING id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
+`
+
+type CreateAnimeParams struct {
+	RomajiName   string
+	JapaneseName sql.NullString
+	EnglishName  sql.NullString
+	Type         sql.NullString
+	ReleaseDate  sql.NullTime
+}
+
+func (q *Queries) CreateAnime(ctx context.Context, arg CreateAnimeParams) (Anime, error) {
+	row := q.db.QueryRowContext(ctx, createAnime,
+		arg.RomajiName,
+		arg.JapaneseName,
+		arg.EnglishName,
+		arg.Type,
+		arg.ReleaseDate,
+	)
+	var i Anime
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RomajiName,
+		&i.JapaneseName,
+		&i.EnglishName,
+		&i.Type,
+		&i.ReleaseDate,
+	)
+	return i, err
+}
+
+const deleteAnimeById = `-- name: DeleteAnimeById :exec
+DELETE from anime WHERE id = $1
+`
+
+func (q *Queries) DeleteAnimeById(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteAnimeById, id)
+	return err
+}
+
 const getAnime = `-- name: GetAnime :many
 SELECT id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date FROM anime
 `
@@ -46,36 +99,12 @@ func (q *Queries) GetAnime(ctx context.Context) ([]Anime, error) {
 	return items, nil
 }
 
-const insertAnime = `-- name: InsertAnime :one
-INSERT INTO anime(
-	created_at,
-	updated_at,
-	romaji_name,
-	japanese_name,
-	english_name,
-	type,
-	release_date
-)
-VALUES(NOW(), NOW(), $1, $2, $3, $4, $5)
-RETURNING id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
+const getAnimeById = `-- name: GetAnimeById :one
+SELECT id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date FROM anime WHERE id = $1
 `
 
-type InsertAnimeParams struct {
-	RomajiName   string
-	JapaneseName sql.NullString
-	EnglishName  sql.NullString
-	Type         sql.NullString
-	ReleaseDate  sql.NullTime
-}
-
-func (q *Queries) InsertAnime(ctx context.Context, arg InsertAnimeParams) (Anime, error) {
-	row := q.db.QueryRowContext(ctx, insertAnime,
-		arg.RomajiName,
-		arg.JapaneseName,
-		arg.EnglishName,
-		arg.Type,
-		arg.ReleaseDate,
-	)
+func (q *Queries) GetAnimeById(ctx context.Context, id int32) (Anime, error) {
+	row := q.db.QueryRowContext(ctx, getAnimeById, id)
 	var i Anime
 	err := row.Scan(
 		&i.ID,
@@ -88,4 +117,28 @@ func (q *Queries) InsertAnime(ctx context.Context, arg InsertAnimeParams) (Anime
 		&i.ReleaseDate,
 	)
 	return i, err
+}
+
+const updateAnimeById = `-- name: UpdateAnimeById :exec
+UPDATE anime 
+SET updated_at = NOW(), romaji_name = $1, japanese_name = $2, english_name = $3, type = $4, release_date = $5
+`
+
+type UpdateAnimeByIdParams struct {
+	RomajiName   string
+	JapaneseName sql.NullString
+	EnglishName  sql.NullString
+	Type         sql.NullString
+	ReleaseDate  sql.NullTime
+}
+
+func (q *Queries) UpdateAnimeById(ctx context.Context, arg UpdateAnimeByIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateAnimeById,
+		arg.RomajiName,
+		arg.JapaneseName,
+		arg.EnglishName,
+		arg.Type,
+		arg.ReleaseDate,
+	)
+	return err
 }
