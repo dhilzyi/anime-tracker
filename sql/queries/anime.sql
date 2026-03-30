@@ -10,3 +10,6 @@ INSERT INTO anime(
 )
 VALUES(NOW(), NOW(), $1, $2, $3, $4, $5)
 RETURNING *;
+
+-- name: GetAnime :many
+SELECT * FROM anime;

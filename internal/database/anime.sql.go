@@ -10,6 +10,42 @@ import (
 	"database/sql"
 )
 
+const getAnime = `-- name: GetAnime :many
+SELECT id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date FROM anime
+`
+
+func (q *Queries) GetAnime(ctx context.Context) ([]Anime, error) {
+	rows, err := q.db.QueryContext(ctx, getAnime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Anime
+	for rows.Next() {
+		var i Anime
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RomajiName,
+			&i.JapaneseName,
+			&i.EnglishName,
+			&i.Type,
+			&i.ReleaseDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertAnime = `-- name: InsertAnime :one
 INSERT INTO anime(
 	created_at,

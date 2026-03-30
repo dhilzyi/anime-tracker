@@ -1,51 +1,41 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
+	"github.com/dhilzyi/anime-tracker/internal/api"
 	"github.com/dhilzyi/anime-tracker/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-type state struct {
-	db *database.Queries
-}
-
 func main() {
 	godotenv.Load(".env")
 
 	dbUrl := os.Getenv("db_url")
+	port := os.Getenv("port")
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 	dbQueries := database.New(db)
-	state := state{
-		db: dbQueries,
+	handler := api.NewHandler(dbQueries)
+
+	mux := http.NewServeMux()
+	srv := http.Server{
+		Handler: mux,
+		Addr:    fmt.Sprintf(":%s", port),
 	}
 
-	input := database.InsertAnimeParams{
-		RomajiName: "shingeki no kyojin",
-	}
-	input2 := database.InsertAnimeParams{
-		RomajiName: "kuroko no basket",
-	}
+	mux.HandleFunc("GET /api/anime", handler.GetAnime)
+	mux.HandleFunc("POST /api/anime", handler.PostAnime)
 
-	if data, err := state.db.InsertAnime(context.Background(), input); err != nil {
-		log.Fatal(err)
-	} else {
-		fmt.Println(data)
-	}
-	if data, err := state.db.InsertAnime(context.Background(), input2); err != nil {
-		log.Fatal(err)
-	} else {
-		fmt.Println(data)
-	}
+	fmt.Printf("Serving at http://localhost:%s/\n", port)
+	log.Fatal(srv.ListenAndServe())
 
 }
