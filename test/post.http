@@ -4,17 +4,13 @@ POST {{api_anime}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "english_name": "code geass rebel",
-  "japanese_name": "コードギアス反逆のルルーシュR2",
-  "release_date": "2012-11-25",
-  "romaji_name": "code geas hangyaku lelouch R2",
-  "type": "TV"
+  "release_date": "2012-11-25"
 }
 
 
 ### UPDATE ANIME BY ID
 
-PATCH {{api_anime}}/17 HTTP/1.1
+PATCH {{api_anime}}/ird/17 HTTP/1.1
 Content-Type: application/json
 
 {
@@ -28,9 +24,41 @@ Content-Type: application/json
 
 ### DELETE ANIME BY ID
 
-DELETE {{api_anime}}/14 HTTP/1.1
+DELETE {{api_anime}}/id/14 HTTP/1.1
 
 
 ### GET ANIME BY ID
 
-GET {{api_anime}}/16 HTTP/1.1
+GET {{api_anime}}/id/16 HTTP/1.1
+
+
+### POST BY BULK
+
+POST {{api_anime}}/bulk HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "japanese_name": "響けユーフォニアム",
+    "romaji_name": "hibike"
+  },
+  {
+    "romaji_name": "gochiusa"
+  },
+  {
+    "english_name": "tokyo ghoul"
+  },
+  {
+    "english_name": "grand blue",
+    "japanese_name": "ぐらんぶる！",
+    "release_date": "2017-12-31",
+    "romaji_name": "grand blue",
+    "type": "TV"
+  },
+  {
+    "english_name": "code geass rebel",
+    "japanese_name": "コードギアス反逆のルルーシュR2",
+    "release_date": "2012-11-25",
+    "type": "TV"
+  }
+]

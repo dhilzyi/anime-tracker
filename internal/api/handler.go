@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/dhilzyi/anime-tracker/internal/database"
 )
@@ -37,13 +39,18 @@ func (h *Handler) GetAnime(w http.ResponseWriter, r *http.Request) {
 		remapDataAnime = append(remapDataAnime, instance)
 	}
 
-	respondWithJSON(w, 200, remapDataAnime)
+	respondWithJSON(w, http.StatusOK, remapDataAnime)
 }
 
 func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
 	var req Anime
 	if err := decodeJson(r.Body, &req); err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	if strings.TrimSpace(req.RomajiName) == "" {
+		respondWithError(w, http.StatusBadRequest, "romaji_name can't be empty", fmt.Errorf("romaji_name can't be empty"))
 		return
 	}
 
@@ -56,7 +63,8 @@ func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.db.CreateAnime(context.Background(), params); err != nil {
-		respondWithError(w, http.StatusInternalServerError, "", err)
+		respondWithError(w, http.StatusInternalServerError, err.Error(), err)
+		return
 	}
 	w.WriteHeader(204)
 }
@@ -163,4 +171,43 @@ func (h *Handler) UpdateAnimeById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) PostAnimeBulk(w http.ResponseWriter, r *http.Request) {
+	var reqBulk []Anime
+	if err := decodeJson(r.Body, &reqBulk); err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	type bulkResponse struct {
+		Inserted int `json:"inserted"`
+		Failed   int `json:"failed"`
+	}
+	var res bulkResponse
+	for _, req := range reqBulk {
+		if strings.TrimSpace(req.RomajiName) == "" {
+			res.Failed += 1
+			continue
+		}
+
+		params := database.CreateAnimeParams{
+			RomajiName:   req.RomajiName,
+			JapaneseName: toNullString(req.JapaneseName),
+			EnglishName:  toNullString(req.EnglishName),
+			Type:         toNullString(req.Type),
+			ReleaseDate:  toNullTime(req.ReleaseDate),
+		}
+
+		if _, err := h.db.CreateAnime(context.Background(), params); err != nil {
+			res.Failed += 1
+		} else {
+			res.Inserted += 1
+		}
+	}
+	if res.Inserted == 0 {
+		respondWithError(w, http.StatusBadRequest, "failed to insert", fmt.Errorf("failed to insert"))
+		return
+	}
+	respondWithJSON(w, http.StatusMultiStatus, res)
 }

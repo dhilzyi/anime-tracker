@@ -33,10 +33,11 @@ func main() {
 	}
 
 	mux.HandleFunc("GET /api/anime", handler.GetAnime)
-	mux.HandleFunc("GET /api/anime/{animeID}", handler.GetAnimeById)
+	mux.HandleFunc("GET /api/anime/id/{animeID}", handler.GetAnimeById)
 	mux.HandleFunc("POST /api/anime", handler.PostAnime)
-	mux.HandleFunc("PATCH /api/anime/{animeID}", handler.UpdateAnimeById)
-	mux.HandleFunc("DELETE /api/anime/{animeID}", handler.DeleteAnimeById)
+	mux.HandleFunc("POST /api/anime/bulk", handler.PostAnimeBulk)
+	mux.HandleFunc("PATCH /api/anime/id/{animeID}", handler.UpdateAnimeById)
+	mux.HandleFunc("DELETE /api/anime/id/{animeID}", handler.DeleteAnimeById)
 
 	fmt.Printf("Serving at http://localhost:%s/\n", port)
 	log.Fatal(srv.ListenAndServe())
