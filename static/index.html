@@ -1,0 +1,72 @@
+<!-- web/index.html -->
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="styles.css" />
+    <title>Anime Tracker</title>
+  </head>
+  <body>
+    <h1>Anime List</h1>
+
+    <table id="main-table">
+      <tr>
+        <th>No</th>
+        <th>Anime ID</th>
+        <th>Romaji Name</th>
+        <th>Japanese Name</th>
+        <th>English Name</th>
+        <th>Type</th>
+        <th>Release Date</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>14</td>
+        <td>Grand Blue</td>
+        <td>ぐらんぶる！</td>
+        <td>Grand Blue</td>
+        <td>TV</td>
+        <td>2021-05-22</td>
+      </tr>
+    </table>
+
+    <h2>Add Anime</h2>
+    <!-- <form id="anime-form"> -->
+    <!--   <input name="romaji_name" placeholder="Romaji Name" required /> -->
+    <!--   <input name="release_date" placeholder="YYYY-MM-DD" /> -->
+    <!--   <button type="submit">Add</button> -->
+    <!-- </form> -->
+
+    <form id="anime-form">
+      <table id="input-table">
+        <tr>
+          <th>Romaji Name</th>
+          <th>Japanese Name</th>
+          <th>English Name</th>
+          <th>Type</th>
+          <th>Release Date</th>
+        </tr>
+        <tr>
+          <td>
+            <input name="romaji_name" type="text" required />
+          </td>
+          <td>
+            <input name="japanese_name" type="text" />
+          </td>
+          <td>
+            <input name="english_name" type="text" />
+          </td>
+          <td>
+            <input name="type" type="text" />
+          </td>
+          <td>
+            <input name="release_date" type="text" />
+          </td>
+          <td>
+            <button type="submit">Add</button>
+          </td>
+        </tr>
+      </table>
+    </form>
+    <script src="app.js"></script>
+  </body>
+</html>
