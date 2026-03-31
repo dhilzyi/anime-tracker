@@ -43,7 +43,7 @@ func (h *Handler) GetAnime(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
 	var req Anime
 	if err := decodeJson(r.Body, &req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "", err)
+		respondWithError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
@@ -117,5 +117,50 @@ func (h *Handler) UpdateAnimeById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inputParam := database.UpdateAnimeByIdParams{}
+	ctx := context.Background()
+	animeData, err := h.db.GetAnimeById(ctx, int32(animeID))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "Anime by following id is not exist", err)
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	var req UpdateAnimeRequest
+	if err := decodeJson(r.Body, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid json", err)
+		return
+	}
+
+	if req.RomajiName != nil {
+		animeData.RomajiName = *req.RomajiName
+	}
+	if req.JapaneseName != nil {
+		animeData.JapaneseName = toNullString(req.JapaneseName)
+	}
+	if req.EnglishName != nil {
+		animeData.EnglishName = toNullString(req.EnglishName)
+	}
+	if req.ReleaseDate != nil {
+		animeData.ReleaseDate = toNullTime(req.ReleaseDate)
+	}
+	if req.Type != nil {
+		animeData.Type = toNullString(req.Type)
+	}
+
+	if err := h.db.UpdateAnimeById(ctx, database.UpdateAnimeByIdParams{
+		RomajiName:   animeData.RomajiName,
+		JapaneseName: animeData.JapaneseName,
+		EnglishName:  animeData.EnglishName,
+		ReleaseDate:  animeData.ReleaseDate,
+		Type:         animeData.Type,
+		ID:           int32(animeID),
+	}); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

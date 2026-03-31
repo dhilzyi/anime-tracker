@@ -12,6 +12,20 @@ Content-Type: application/json
 }
 
 
+### UPDATE ANIME BY ID
+
+PATCH {{api_anime}}/17 HTTP/1.1
+Content-Type: application/json
+
+{
+  "english_name": "code geass rebel",
+  "japanese_name": "コードギアス反逆のルルーシュR2",
+  "release_date": "2012-11-25",
+  "romaji_name": "code geas hangyaku lelouch R2",
+  "type": "TV"
+}
+
+
 ### DELETE ANIME BY ID
 
 DELETE {{api_anime}}/14 HTTP/1.1

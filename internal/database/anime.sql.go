@@ -11,17 +11,20 @@ import (
 )
 
 const createAnime = `-- name: CreateAnime :one
-INSERT INTO anime(
-	created_at,
-	updated_at,
-	romaji_name,
-	japanese_name,
-	english_name,
-	type,
-	release_date
-)
-VALUES(NOW(), NOW(), $1, $2, $3, $4, $5)
-RETURNING id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
+INSERT INTO
+  anime (
+    created_at,
+    updated_at,
+    romaji_name,
+    japanese_name,
+    english_name,
+    type,
+    release_date
+  )
+VALUES
+  (NOW(), NOW(), $1, $2, $3, $4, $5)
+RETURNING
+  id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
 `
 
 type CreateAnimeParams struct {
@@ -55,7 +58,9 @@ func (q *Queries) CreateAnime(ctx context.Context, arg CreateAnimeParams) (Anime
 }
 
 const deleteAnimeById = `-- name: DeleteAnimeById :exec
-DELETE from anime WHERE id = $1
+DELETE from anime
+WHERE
+  id = $1
 `
 
 func (q *Queries) DeleteAnimeById(ctx context.Context, id int32) error {
@@ -64,7 +69,10 @@ func (q *Queries) DeleteAnimeById(ctx context.Context, id int32) error {
 }
 
 const getAnime = `-- name: GetAnime :many
-SELECT id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date FROM anime
+SELECT
+  id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
+FROM
+  anime
 `
 
 func (q *Queries) GetAnime(ctx context.Context) ([]Anime, error) {
@@ -100,7 +108,12 @@ func (q *Queries) GetAnime(ctx context.Context) ([]Anime, error) {
 }
 
 const getAnimeById = `-- name: GetAnimeById :one
-SELECT id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date FROM anime WHERE id = $1
+SELECT
+  id, created_at, updated_at, romaji_name, japanese_name, english_name, type, release_date
+FROM
+  anime
+WHERE
+  id = $1
 `
 
 func (q *Queries) GetAnimeById(ctx context.Context, id int32) (Anime, error) {
@@ -120,8 +133,16 @@ func (q *Queries) GetAnimeById(ctx context.Context, id int32) (Anime, error) {
 }
 
 const updateAnimeById = `-- name: UpdateAnimeById :exec
-UPDATE anime 
-SET updated_at = NOW(), romaji_name = $1, japanese_name = $2, english_name = $3, type = $4, release_date = $5
+UPDATE anime
+SET
+  updated_at = NOW(),
+  romaji_name = $1,
+  japanese_name = $2,
+  english_name = $3,
+  type = $4,
+  release_date = $5
+WHERE
+  id = $6
 `
 
 type UpdateAnimeByIdParams struct {
@@ -130,6 +151,7 @@ type UpdateAnimeByIdParams struct {
 	EnglishName  sql.NullString
 	Type         sql.NullString
 	ReleaseDate  sql.NullTime
+	ID           int32
 }
 
 func (q *Queries) UpdateAnimeById(ctx context.Context, arg UpdateAnimeByIdParams) error {
@@ -139,6 +161,7 @@ func (q *Queries) UpdateAnimeById(ctx context.Context, arg UpdateAnimeByIdParams
 		arg.EnglishName,
 		arg.Type,
 		arg.ReleaseDate,
+		arg.ID,
 	)
 	return err
 }

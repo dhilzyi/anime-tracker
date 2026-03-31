@@ -35,6 +35,7 @@ func main() {
 	mux.HandleFunc("GET /api/anime", handler.GetAnime)
 	mux.HandleFunc("GET /api/anime/{animeID}", handler.GetAnimeById)
 	mux.HandleFunc("POST /api/anime", handler.PostAnime)
+	mux.HandleFunc("PATCH /api/anime/{animeID}", handler.UpdateAnimeById)
 	mux.HandleFunc("DELETE /api/anime/{animeID}", handler.DeleteAnimeById)
 
 	fmt.Printf("Serving at http://localhost:%s/\n", port)
