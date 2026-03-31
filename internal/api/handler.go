@@ -29,6 +29,7 @@ func (h *Handler) GetAnime(w http.ResponseWriter, r *http.Request) {
 	var remapDataAnime []Anime
 	for i := range dataAnime {
 		instance := Anime{
+			Id:           dataAnime[i].ID,
 			RomajiName:   dataAnime[i].RomajiName,
 			EnglishName:  &dataAnime[i].EnglishName.String,
 			JapaneseName: &dataAnime[i].JapaneseName.String,
@@ -62,11 +63,22 @@ func (h *Handler) PostAnime(w http.ResponseWriter, r *http.Request) {
 		ReleaseDate:  toNullTime(req.ReleaseDate),
 	}
 
-	if _, err := h.db.CreateAnime(context.Background(), params); err != nil {
+	animeData, err := h.db.CreateAnime(context.Background(), params)
+	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
-	w.WriteHeader(204)
+
+	remap := Anime{
+		Id:           animeData.ID,
+		RomajiName:   animeData.RomajiName,
+		EnglishName:  &animeData.EnglishName.String,
+		JapaneseName: &animeData.JapaneseName.String,
+		Type:         &animeData.Type.String,
+		ReleaseDate:  validateTime(animeData.ReleaseDate),
+	}
+
+	respondWithJSON(w, http.StatusOK, remap)
 }
 
 func (h *Handler) DeleteAnimeById(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +118,7 @@ func (h *Handler) GetAnimeById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	remap := Anime{
+		Id:           animeData.ID,
 		RomajiName:   animeData.RomajiName,
 		EnglishName:  &animeData.EnglishName.String,
 		JapaneseName: &animeData.JapaneseName.String,

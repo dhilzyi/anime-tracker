@@ -31,6 +31,9 @@ func main() {
 		Handler: mux,
 		Addr:    ":" + port,
 	}
+	fs := http.FileServer(http.Dir("./static"))
+
+	mux.Handle("/", fs)
 
 	mux.HandleFunc("GET /api/anime", handler.GetAnime)
 	mux.HandleFunc("GET /api/anime/id/{animeID}", handler.GetAnimeById)
